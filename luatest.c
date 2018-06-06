@@ -113,12 +113,20 @@ int luaopen_http2(lua_State *lua)
 void luacoro(lua_State *lua)
 {
   int it = 0;
+  int b;
   luaL_dostring(lua, "co = coroutine.create(coro)");
   do {
     luaL_dostring(lua, "ok,args = coroutine.resume(co)");
     luaL_dostring(lua, "return ok");
+    b = lua_toboolean(lua, -1);
+    lua_pop(lua, 1);
     it++;
-  } while (lua_toboolean(lua, -1));
+  } while (b);
+  if (lua_gettop(lua) != 1)
+  {
+    printf("top %d\n", lua_gettop(lua));
+    exit(1);
+  }
   if (it != 5)
   {
     printf("it %d\n", it);
@@ -164,9 +172,11 @@ int main(int argc, char **argv){
         luaL_requiref(lua, "Http2", luaopen_http2, 1);
 
         luaL_dostring(lua, "loadfile(\"test.lua\")()");
-        luaL_dostring(lua, "if true then");
+#if 0
+        luaL_dostring(lua, "if false then");
         luaL_dostring(lua, "print(\"test successful\")");
         luaL_dostring(lua, "end");
+#endif
 
         printf("Coroutine test\n");
 
