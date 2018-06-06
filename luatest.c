@@ -183,10 +183,11 @@ int main(int argc, char **argv){
         ssize_t nread;
         size_t len = 0;
         int i;
+        int thresh1 = 0, thresh2 = 0;
 
         luaL_requiref(lua, "Http2", luaopen_http2, 1);
 
-        luaL_dostring(lua, "loadfile(\"test.lua\")()");
+        luaL_dostring(lua, "loadfile(\"test.luac\")()");
 #if 0
         luaL_dostring(lua, "if false then");
         luaL_dostring(lua, "print(\"test successful\")");
@@ -210,10 +211,25 @@ int main(int argc, char **argv){
 
         for (i = 0; i < 1000*1000; i++)
         {
+                struct timeval tv1, tv2;
+                double secs;
+                gettimeofday(&tv1, NULL);
                 luacorotbl(lua, i);
+                gettimeofday(&tv2, NULL);
+                secs = (tv2.tv_sec-tv1.tv_sec)+(tv2.tv_usec-tv1.tv_usec)/1e6;
+                if (secs > 1e-3 && !thresh1 && i < 10000)
+                {
+                        printf("1: iter %d secs %g\n", i, secs);
+                        thresh1 = 1;
+                }
+                if (secs > 1e-2 && !thresh2 && i < 100000)
+                {
+                        printf("2: iter %d secs %g\n", i, secs);
+                        thresh2 = 1;
+                }
         }
 
-	printf("top %d\n", lua_gettop(lua));
+        printf("top %d\n", lua_gettop(lua));
 
         printf("Entering command loop mode, press ^D to end\n");
 
