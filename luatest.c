@@ -208,6 +208,8 @@ int main(int argc, char **argv){
 
         printf("Coroutine memory test\n");
         luaL_dostring(lua, "cotbl = {}");
+	lua_gc(lua, LUA_GCSETPAUSE, 200);
+	lua_gc(lua, LUA_GCSETSTEPMUL, 100);
 
         for (i = 0; i < 1000*1000; i++)
         {
@@ -215,6 +217,7 @@ int main(int argc, char **argv){
                 double secs;
                 gettimeofday(&tv1, NULL);
                 luacorotbl(lua, i);
+		lua_gc(lua, LUA_GCSTEP, 0);
                 gettimeofday(&tv2, NULL);
                 secs = (tv2.tv_sec-tv1.tv_sec)+(tv2.tv_usec-tv1.tv_usec)/1e6;
                 if (secs > 1e-3 && !thresh1 && i < 10000)
