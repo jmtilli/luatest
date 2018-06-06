@@ -110,6 +110,20 @@ int luaopen_http2(lua_State *lua)
         return 1;
 }
 
+void luacorotbl(lua_State *lua, int i)
+{
+  int b;
+  lua_pushnumber(lua, i);
+  lua_setglobal(lua, "idx");
+  luaL_dostring(lua, "cotbl[idx] = coroutine.create(coro)");
+  luaL_dostring(lua, "ok,args = coroutine.resume(cotbl[idx])");
+  if (lua_gettop(lua) != 1)
+  {
+    printf("top %d\n", lua_gettop(lua));
+    exit(1);
+  }
+}
+
 void luacoro(lua_State *lua)
 {
   int it = 0;
@@ -168,6 +182,7 @@ int main(int argc, char **argv){
         char *line = NULL;
         ssize_t nread;
         size_t len = 0;
+        int i;
 
         luaL_requiref(lua, "Http2", luaopen_http2, 1);
 
@@ -189,6 +204,16 @@ int main(int argc, char **argv){
         printf("Coroutine perf test\n");
 
         luacoroperf(lua);
+
+        printf("Coroutine memory test\n");
+        luaL_dostring(lua, "cotbl = {}");
+
+        for (i = 0; i < 1000*1000; i++)
+        {
+                luacorotbl(lua, i);
+        }
+
+	printf("top %d\n", lua_gettop(lua));
 
         printf("Entering command loop mode, press ^D to end\n");
 
