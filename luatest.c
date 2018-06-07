@@ -117,7 +117,7 @@ void luacorotbl(lua_State *lua, int i)
   lua_setglobal(lua, "idx");
   luaL_dostring(lua, "cotbl[idx] = coroutine.create(coro)");
   luaL_dostring(lua, "ok,args = coroutine.resume(cotbl[idx])");
-  if (lua_gettop(lua) != 1)
+  if (lua_gettop(lua) != 0)
   {
     printf("top %d\n", lua_gettop(lua));
     exit(1);
@@ -136,7 +136,7 @@ void luacoro(lua_State *lua)
     lua_pop(lua, 1);
     it++;
   } while (b);
-  if (lua_gettop(lua) != 1)
+  if (lua_gettop(lua) != 0)
   {
     printf("top %d\n", lua_gettop(lua));
     exit(1);
@@ -186,6 +186,7 @@ int main(int argc, char **argv){
         int thresh1 = 0, thresh2 = 0;
 
         luaL_requiref(lua, "Http2", luaopen_http2, 1);
+        lua_pop(lua, 1);
 
         luaL_dostring(lua, "loadfile(\"test.luac\")()");
 #if 0
@@ -211,7 +212,7 @@ int main(int argc, char **argv){
 	lua_gc(lua, LUA_GCSETPAUSE, 200);
 	lua_gc(lua, LUA_GCSETSTEPMUL, 100);
 
-        for (i = 0; i < 1000*1000; i++)
+        for (i = 0; i < 100*1000; i++)
         {
                 struct timeval tv1, tv2;
                 double secs;
@@ -232,9 +233,9 @@ int main(int argc, char **argv){
                 }
         }
 
-        printf("top %d\n", lua_gettop(lua));
-
         printf("Entering command loop mode, press ^D to end\n");
+
+        lua_settop(lua, 0);
 
         while ((nread = getline(&line, &len, stdin)) != -1) {
             if (strlen(line) != nread)
@@ -242,6 +243,7 @@ int main(int argc, char **argv){
                 printf("Seen NUL character\n");
             }
             luaL_dostring(lua, line);
+            lua_settop(lua, 0);
         }
 
         free(line);
