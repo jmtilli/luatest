@@ -113,10 +113,41 @@ int luaopen_http2(lua_State *lua)
 void luacorotbl(lua_State *lua, int i)
 {
   int b;
+
+  lua_getglobal(lua, "cotbl");
+  lua_getglobal(lua, "coroutine");
+  lua_getfield(lua, -1, "create");
+  lua_getglobal(lua, "coro");
+  lua_call(lua, 1, 1); // stack after this: cotbl, coroutine, result
+  lua_pushnumber(lua, i); // stack after: cotbl, coroutine, result, i
+  lua_pushvalue(lua, -2); // stack after: cotbl, coroutine, r, i, r
+  lua_settable(lua, -5); // stack after: cotbl, coroutine, r
+  lua_pop(lua, 3);
+
+  lua_getglobal(lua, "cotbl");
+  lua_pushnumber(lua, i); // stack after: cotbl, i
+  lua_gettable(lua, -2); // stack after: cotbl, cotbl[i]
+  lua_getglobal(lua, "coroutine");
+  lua_getfield(lua, -1, "resume"); // after: cotbl, cotbl[i], coroutine, coroutine.resume
+  lua_pushvalue(lua, -3); // after: cotbl, cotbl[i], coroutine, coroutine.resume, cotbl[i]
+  lua_call(lua, 1, 2); // after: cotbl, cotbl[i], coroutine, ok, args
+  if (!lua_isboolean(lua, -2) || !lua_toboolean(lua, -2))
+  {
+    printf("not ok\n");
+  }
+  else
+  {
+    //printf("ok\n");
+  }
+  lua_pop(lua, 5);
+
+#if 0
   lua_pushnumber(lua, i);
   lua_setglobal(lua, "idx");
   luaL_dostring(lua, "cotbl[idx] = coroutine.create(coro)");
   luaL_dostring(lua, "ok,args = coroutine.resume(cotbl[idx])");
+#endif
+
   if (lua_gettop(lua) != 0)
   {
     printf("top %d\n", lua_gettop(lua));
@@ -128,12 +159,19 @@ void luacoro(lua_State *lua)
 {
   int it = 0;
   int b;
-  luaL_dostring(lua, "co = coroutine.create(coro)");
+  lua_getglobal(lua, "coroutine");
+  lua_getfield(lua, -1, "create");
+  lua_getglobal(lua, "coro");
+  lua_call(lua, 1, 1);
+  lua_setglobal(lua, "co");
+  lua_pop(lua, 1);
   do {
-    luaL_dostring(lua, "ok,args = coroutine.resume(co)");
-    luaL_dostring(lua, "return ok");
-    b = lua_toboolean(lua, -1);
-    lua_pop(lua, 1);
+    lua_getglobal(lua, "coroutine");
+    lua_getfield(lua, -1, "resume");
+    lua_getglobal(lua, "co");
+    lua_call(lua, 1, 2);
+    b = lua_toboolean(lua, -2);
+    lua_pop(lua, 3);
     it++;
   } while (b);
   if (lua_gettop(lua) != 0)
@@ -169,7 +207,9 @@ void luaperf(lua_State *lua)
   gettimeofday(&tv1, NULL);
   for (i = 0; i < 100*1000; i++)
   {
-    luaL_dostring(lua, "f()");
+    lua_getglobal(lua, "f");
+    lua_call(lua, 0, 0);
+    //luaL_dostring(lua, "f()");
   }
   gettimeofday(&tv2, NULL);
   printf("Time %g us / iter\n",
