@@ -191,13 +191,13 @@ void luacoroperf(lua_State *lua)
   int i;
   struct timeval tv1, tv2;
   gettimeofday(&tv1, NULL);
-  for (i = 0; i < 10*1000; i++)
+  for (i = 0; i < 100*1000; i++)
   {
     luacoro(lua);
   }
   gettimeofday(&tv2, NULL);
   printf("Time %g us / iter\n",
-         (tv2.tv_sec-tv1.tv_sec + (tv2.tv_usec-tv1.tv_usec)/1e6)/10e3*1e6);
+         (tv2.tv_sec-tv1.tv_sec + (tv2.tv_usec-tv1.tv_usec)/1e6)/100e3*1e6);
 }
 
 void luaperf(lua_State *lua)
