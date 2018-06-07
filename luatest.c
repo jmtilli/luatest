@@ -185,8 +185,16 @@ int main(int argc, char **argv){
         int i;
         int thresh1 = 0, thresh2 = 0;
 
-        luaL_requiref(lua, "Http2", luaopen_http2, 1);
+        //luaL_requiref(lua, "Http2", luaopen_http2, 1);
+        //lua_pop(lua, 1);
+
+        lua_pushcfunction(lua, luaopen_http2);
+        lua_pushstring(lua, "Http2");
+        lua_call(lua, 1, 1);
+        lua_pushvalue(lua, -1);
+        lua_setglobal(lua, "Http2");
         lua_pop(lua, 1);
+        printf("load top: %d\n", lua_gettop(lua));
 
         luaL_dostring(lua, "loadfile(\"test.luac\")()");
 #if 0
